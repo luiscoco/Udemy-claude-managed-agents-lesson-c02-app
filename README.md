@@ -36,12 +36,6 @@ PORT=3000
 
 `CLAUDE_MODEL` is the code's configured model choice; select a model available to your workspace. The key remains server-side. Restart after editing `.env`. Keep real credentials out of `.env.example`, which is committed for students.
 
-### Sanitized snapshot of the current local configuration
-
-![C02 local environment with all non-PORT values redacted](docs/images/env-redacted.png)
-
-This image is rendered from a sanitized copy of the current local `.env`. All values except `PORT`, including resource IDs and any teaching-service credentials, are replaced **before rendering**. Extra teaching variables in an existing file are not required by the application. `[REDACTED]` is a documentation label, not a usable configuration value.
-
 ## Create or reuse the managed resources
 
 If compatible resources do not already exist:

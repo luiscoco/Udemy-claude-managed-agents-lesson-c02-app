@@ -21,6 +21,9 @@ const server = createServer(async (req, res) => {
   try {
     if (url.pathname === "/") return await sendFile(res, "public/index.html", "text/html; charset=utf-8");
     const assets: Record<string, string> = {
+      "/prism.js": "text/javascript; charset=utf-8",
+      "/code-highlighting.js": "text/javascript; charset=utf-8",
+      "/code-highlighting.css": "text/css; charset=utf-8",
       "/guide.html": "text/html; charset=utf-8",
       "/architecture.html": "text/html; charset=utf-8",
       "/style.css": "text/css; charset=utf-8",

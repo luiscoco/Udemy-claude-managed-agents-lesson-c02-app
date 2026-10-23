@@ -37,11 +37,11 @@ NAV='''<nav class="student-nav" aria-label="Lesson sections">
 
 
 def page(title,heading,subtitle,content):
-    return f'''<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C02 · {escape(title)}</title><link rel="stylesheet" href="/style.css"></head><body><main>
+    return f'''<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C02 · {escape(title)}</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/code-highlighting.css"></head><body><main>
 <div class="course-bar"><div class="course-title">How <span>Claude Managed Agents</span> Works</div><span class="course-tag">CONCEPT 02 / 60</span></div>
 <header><div><p class="eyebrow">LESSON C02 / {escape(title.upper())}</p><h1>{heading}</h1><p class="intro">{subtitle}</p></div><div class="header-controls"><div class="hero-art"><img src="/astronaut.png" alt=""><span>LESSON C02<br>AGENT SURFACES</span></div><button id="themeToggle" class="secondary theme-toggle" type="button" aria-pressed="false">Switch to dark mode</button></div></header>
 {NAV}{content}{NAV.replace('aria-label="Lesson sections"','aria-label="Continue learning"')}
-</main><script src="/navigation.js"></script></body></html>'''
+</main><script src="/navigation.js"></script><script defer src="/prism.js"></script><script defer src="/code-highlighting.js"></script></body></html>'''
 
 
 goals=[
