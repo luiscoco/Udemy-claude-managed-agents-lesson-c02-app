@@ -81,19 +81,130 @@ Local pages:
 
 Both flows use the real Claude API and can incur charges. A managed run creates a new remote session. Navigating away does not interrupt remote work; this sample has no interrupt control or general run deadline. Avoid replaying an uncertain reservation. The browser closes a dropped SSE connection instead of automatically reconnecting and starting a second run.
 
-## Follow the code
+## How the app was build
 
-| Responsibility | Actual source |
-|---|---|
-| Agent/environment creation and saved IDs | [src/managed-setup.ts](src/managed-setup.ts), [src/shared.ts](src/shared.ts) |
-| Manual model loop and local history | [src/flows/manual.ts](src/flows/manual.ts) |
-| Managed session and custom-tool result correlation | [src/flows/managed.ts](src/flows/managed.ts) |
-| Schema, host validation, reservation effect, seeded stock | [src/inventory.ts](src/inventory.ts) |
-| Local routes and browser SSE | [src/server.ts](src/server.ts) |
-| Comparison controls and evidence rendering | [public/lab.js](public/lab.js) |
-| Student pages and shared navigation/theme | [public/guide.html](public/guide.html), [public/architecture.html](public/architecture.html), [public/navigation.js](public/navigation.js) |
+### 1. Execute the business effect in one checked host handler
 
-The architecture page contains four prerequisite steps and nine runtime steps, with actual source excerpts and explanations. The two editable UML images follow each protocol separately.
+Both API flows call reserveStock on the host. It validates quantity and SKU, checks available stock, then subtracts units and creates a reservation receipt. A model tool request alone does not change inventory.
+
+Source: [src/inventory.ts](src/inventory.ts#L46)
+
+```typescript
+export function reserveStock(input: unknown): string {
+  const { sku, quantity } = (input ?? {}) as { sku?: unknown; quantity?: unknown };
+  if (
+    typeof sku !== "string" ||
+    !Number.isInteger(quantity) ||
+    (quantity as number) < 1
+  ) {
+    return JSON.stringify({
+      ok: false,
+      error: "Invalid input: need { sku: string, quantity: integer >= 1 }",
+    });
+  }
+  const item = stock[sku];
+  if (!item) {
+    return JSON.stringify({
+      ok: false,
+      error: `Unknown SKU ${sku}`,
+      knownSkus: Object.keys(stock),
+    });
+  }
+  const qty = quantity as number;
+  if (item.available < qty) {
+    return JSON.stringify({
+      ok: false,
+      error: `Only ${item.available} of ${sku} available`,
+    });
+  }
+  item.available -= qty;
+  const reservationId = `RES-${String(nextReservation++).padStart(4, "0")}`;
+  return JSON.stringify({
+    ok: true,
+    reservationId,
+    sku,
+    name: item.name,
+    quantity: qty,
+    remaining: item.available,
+  });
+}
+```
+
+### 2. Drive the Messages API loop explicitly
+
+The host requests a model turn, executes each requested tool call and appends assistant calls plus correlated user tool_result records to messages. The outer loop sends that updated history on the next model request.
+
+Source: [src/flows/manual.ts](src/flows/manual.ts#L18) · selected statements
+
+```typescript
+const res = await client.messages.create({
+  model: MODEL,
+  max_tokens: 16000,
+  tools,
+  messages,
+});
+
+// ... other source statements omitted ...
+const results: Anthropic.ToolResultBlockParam[] = calls.map((call) => {
+  const result = reserveStock(call.input);
+  emit({
+    type: "tool",
+    trigger: "stop_reason: tool_use",
+    input: call.input,
+    result,
+  });
+  return { type: "tool_result", tool_use_id: call.id, content: result };
+});
+
+// ... other source statements omitted ...
+messages.push({ role: "assistant", content: res.content });
+
+// ... other source statements omitted ...
+messages.push({ role: "user", content: results });
+```
+
+### 3. Let the managed session retain conversation state
+
+The managed path creates a session and opens observation before sending the first user message. It reuses the same host effect without maintaining a local messages array.
+
+Source: [src/flows/managed.ts](src/flows/managed.ts#L16) · selected statements
+
+```typescript
+const session = await client.beta.sessions.create({
+  agent: agentId,
+  environment_id: environmentId,
+  title: "Lesson C02 stock reservation",
+});
+
+// ... other source statements omitted ...
+const stream = await client.beta.sessions.events.stream(sessionId);
+
+// ... other source statements omitted ...
+await client.beta.sessions.events.send(sessionId, {
+  events: [{ type: "user.message", content: [{ type: "text", text: prompt }] }],
+});
+```
+
+### 4. Return a managed custom-tool result with the original ID
+
+The host executes the tool and returns user.custom_tool_result using the captured event.id. requires_action keeps the stream active while the session waits for results; it is not ordinary completion.
+
+Source: [src/flows/managed.ts](src/flows/managed.ts#L43) · selected statements
+
+```typescript
+const result = reserveStock(event.input);
+
+// ... other source statements omitted ...
+await client.beta.sessions.events.send(sessionId, {
+  events: [
+    {
+      type: "user.custom_tool_result",
+      custom_tool_use_id: event.id,
+      content: [{ type: "text", text: result }],
+    },
+  ],
+});
+```
 
 ## Terminal versions and verification
 
