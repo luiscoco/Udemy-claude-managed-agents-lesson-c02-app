@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson C02 Live Demo</title>
+<link rel="stylesheet" href="/lab.css">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="lab-page">
+<main class="wrap">
+  <div class="course-bar"><div class="course-title">How <span>Claude Managed Agents</span> Works</div><span class="course-tag">CONCEPT 02 / 60</span></div>
+  <header class="hero"><div>
+    <div class="eyebrow">CLAUDE MANAGED AGENTS / LESSON 02</div>
+    <h1>Choose an agent surface.<br><em>See who runs the loop.</em></h1>
+    <p class="sub">Send one prompt through both loops. See Claude request <code>reserveStock</code> and your application respond.</p>
+  </div><div class="header-controls"><div class="hero-art"><img src="/astronaut.png" alt=""><span>LESSON C02<br>AGENT SURFACES</span></div><button id="themeToggle" class="secondary theme-toggle" type="button" aria-pressed="false">Switch to dark mode</button></div></header>
+  <section class="lesson-flow" aria-label="Comparison workflow"><div><b>01</b><span><strong>Choose</strong><small>Enter a prompt</small></span></div><i>→</i><div><b>02</b><span><strong>Compare</strong><small>Run both surfaces</small></span></div><i>→</i><div><b>03</b><span><strong>Observe</strong><small>Follow the tool calls</small></span></div></section>
+
+
+  <nav class="student-nav" aria-label="Lesson sections">
+    <a href="/guide.html#learning">What you will learn</a>
+    <a href="/guide.html#run-guide">How to run the application</a>
+    <a href="/architecture.html">Architecture &amp; workflow</a>
+    <a href="/#comparison-lab" class="lab-link">Comparison lab ↗</a>
+  </nav>
+  <section class="controls" id="comparison-lab">
+    <label for="prompt">Prompt</label>
+    <textarea id="prompt" rows="2"></textarea>
+    <div class="chips samples" aria-label="Sample prompts">
+      <button type="button" data-sample="Please reserve 2 astronaut mugs (SKU-100) and 1 rocket hoodie (SKU-200), then summarize.">Happy path</button>
+      <button type="button" data-sample="Reserve 5 moon lamps (SKU-300).">Out of stock</button>
+      <button type="button" data-sample="Reserve 4 rocket hoodies (SKU-200) and 1 star blanket (SKU-999).">Partial failure</button>
+    </div>
+    <div class="bar">
+      <button id="run-both" class="btn-primary" type="button">Run both</button>
+      <button id="run-manual" class="btn-manual" type="button">Run manual loop</button>
+      <button id="run-managed" class="btn-managed" type="button">Run managed session</button>
+      <button id="clear" class="btn-ghost" type="button">Clear</button>
+      <span class="hint">Model <code id="model">…</code> · Ctrl+Enter runs both</span>
+    </div>
+    <div id="managed-banner" class="banner" hidden>No managed agent found yet. Run <code>npm run managed:setup</code> once, then reload this page.</div>
+  </section>
+
+  <section class="flows">
+    <article class="flow manual" id="col-manual">
+      <div class="flow-head">
+        <div class="title-row"><span class="num">1</span><h2>Manual tool round trip</h2><span class="status">Idle</span></div>
+        <div class="meta">Slide 07 · src/flows/manual.ts</div>
+        <div class="roles"><span class="pill">Loop: your code</span><span class="pill">History: your messages[]</span></div>
+      </div>
+      <div class="body">
+        <div class="empty">
+          <span>Your host owns every iteration:</span>
+          <ol><li>Ask the model with <code>messages.create</code></li><li>Run <code>reserveStock</code> when <code>stop_reason</code> is <code>tool_use</code></li><li>Append the assistant call and the user result, then ask again</li></ol>
+        </div>
+        <ol class="timeline"></ol>
+      </div>
+      <div class="result" hidden></div>
+    </article>
+
+    <article class="flow managed" id="col-managed">
+      <div class="flow-head">
+        <div class="title-row"><span class="num">2</span><h2>Managed custom tool</h2><span class="status">Idle</span></div>
+        <div class="meta">Slide 08 · src/flows/managed.ts<span class="session"></span></div>
+        <div class="roles"><span class="pill">Loop: the session</span><span class="pill">History: the platform</span></div>
+      </div>
+      <div class="body">
+        <div class="empty">
+          <span>The session drives iteration; your host answers:</span>
+          <ol><li>Observe the <code>agent.custom_tool_use</code> event</li><li>Run the same <code>reserveStock</code> handler</li><li>Send back a <code>user.custom_tool_result</code></li></ol>
+        </div>
+        <ol class="timeline"></ol>
+      </div>
+      <div class="result" hidden></div>
+    </article>
+  </section>
+</main>
+
+<script src="/navigation.js"></script>
+<script src="/vendor/marked.js"></script>
+<script src="/lab.js"></script>
+
+</body>
+</html>

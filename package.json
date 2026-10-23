@@ -1,0 +1,26 @@
+{
+  "name": "lesson-c02-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lesson C02 - manual tool round trip vs. Claude Managed Agents custom tool",
+  "scripts": {
+    "start": "tsx --env-file-if-exists=.env src/server.ts",
+    "dev": "tsx --env-file-if-exists=.env src/server.ts",
+    "cli": "npm run manual && npm run managed",
+    "manual": "tsx --env-file-if-exists=.env src/manual-loop.ts",
+    "managed:setup": "tsx --env-file-if-exists=.env src/managed-setup.ts",
+    "managed": "tsx --env-file-if-exists=.env src/managed-session.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "marked": "^18.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

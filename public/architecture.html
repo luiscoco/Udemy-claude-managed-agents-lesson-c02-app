@@ -1,0 +1,160 @@
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C02 · Architecture &amp; workflow</title><link rel="stylesheet" href="/style.css"></head><body><main>
+<div class="course-bar"><div class="course-title">How <span>Claude Managed Agents</span> Works</div><span class="course-tag">CONCEPT 02 / 60</span></div>
+<header><div><p class="eyebrow">LESSON C02 / ARCHITECTURE &amp; WORKFLOW</p><h1>One host-side effect.<br><span>Two different loops.</span></h1><p class="intro">Use the setup walkthrough, UML sequence diagrams, and actual code snippets to follow both agent surfaces.</p></div><div class="header-controls"><div class="hero-art"><img src="/astronaut.png" alt=""><span>LESSON C02<br>AGENT SURFACES</span></div><button id="themeToggle" class="secondary theme-toggle" type="button" aria-pressed="false">Switch to dark mode</button></div></header>
+<nav class="student-nav" aria-label="Lesson sections">
+<a href="/guide.html#learning">What you will learn</a>
+<a href="/guide.html#run-guide">How to run the application</a>
+<a href="/architecture.html">Architecture &amp; workflow</a>
+<a href="/#comparison-lab" class="lab-link">Comparison lab ↗</a></nav><section id="prerequisites" class="student-section" aria-labelledby="prerequisites-title"><div class="student-heading"><p class="eyebrow">STEP 0 / PREPARE THE MANAGED PATH</p><h2 id="prerequisites-title">Create or reuse the agent and environment</h2><p>Resource setup is separate from the comparison run. Complete it once, then reuse the IDs.</p></div><ol class="run-steps"><li><div class="step-content"><h3>Configure dependencies and the API key</h3><p>From the C02 app directory:</p><pre><code>npm install
+if (!(Test-Path .env)) { Copy-Item .env.example .env }</code></pre><p>Set ANTHROPIC_API_KEY in .env. The npm commands load .env into the host process. For a manual-only run, resource creation is not required.</p></div></li><li><div class="step-content"><h3>Create the environment, then the custom-tool agent</h3><p>Run <code>npm run managed:setup</code> only when new resources are needed. C02 creates the cloud environment first, then registers an agent with the host-side reserveStock custom tool.</p><figure class="code-example"><figcaption>src/managed-setup.ts · source excerpt</figcaption><pre><code class="language-typescript">const environment = await client.beta.environments.create({
+  name: &quot;lesson-c02-env&quot;,
+  config: { type: &quot;cloud&quot;, networking: { type: &quot;limited&quot; } },
+});
+
+const agent = await client.beta.agents.create({
+  name: &quot;Lesson C02 Stock Agent&quot;,
+  model: process.env.CLAUDE_MODEL ?? &quot;claude-opus-5-5&quot;,
+  system:
+    &quot;You are a warehouse assistant. Use the reserveStock tool to reserve products. &quot; +
+    &quot;Report each reservation ID, and explain any reservation that failed.&quot;,
+  // Only the custom tool: the effect lives on our host, not in the sandbox.
+  tools: [{ type: &quot;custom&quot;, ...RESERVE_STOCK_TOOL }],
+});</code></pre><p class="code-explanation">This is the actual setup order. Only a custom tool is registered: the reservation effect remains on the host rather than running in the cloud workspace.</p></figure></div></li><li><div class="step-content"><h3>Save or override the resource IDs</h3><figure class="code-example"><figcaption>src/managed-setup.ts · source excerpt</figcaption><pre><code class="language-typescript">const ids = { agentId: agent.id, agentVersion: agent.version, environmentId: environment.id };
+writeFileSync(&quot;.managed-ids.json&quot;, JSON.stringify(ids, null, 2));
+console.log(&quot;Saved .managed-ids.json:&quot;, ids);</code></pre><p class="code-explanation">The setup script writes the returned agent and environment IDs to the local ID file. This file is excluded from Git.</p></figure><figure class="code-example"><figcaption>src/shared.ts · source excerpt</figcaption><pre><code class="language-typescript">export function loadManagedIds(): { agentId?: string; environmentId?: string } {
+  const saved = existsSync(IDS_FILE) ? JSON.parse(readFileSync(IDS_FILE, &quot;utf8&quot;)) : {};
+  return {
+    agentId: process.env.MANAGED_AGENT_ID ?? saved.agentId,
+    environmentId: process.env.MANAGED_ENVIRONMENT_ID ?? saved.environmentId,
+  };
+}</code></pre><p class="code-explanation">Optional MANAGED_AGENT_ID and MANAGED_ENVIRONMENT_ID values take precedence over the saved file. These C02 variable names differ from C01.</p></figure><p>Reuse both IDs with a compatible custom-tool agent. Repeating setup creates another environment and agent; a session is created later during a managed run.</p></div></li><li><div class="step-content"><h3>Start the comparison application</h3><pre><code>npm start</code></pre><p>Open <code>http://127.0.0.1:3000</code>, or the configured PORT. The environment record describes a reusable configuration; creating it alone does not prove a command ran inside a cloud container.</p></div></li></ol><div class="student-nav"><a href="#manual-title">Manual sequence ↓</a><a href="#managed-title">Managed sequence ↓</a><a href="#walkthrough">Code walkthrough ↓</a></div></section><section class="student-section" aria-labelledby="manual-title"><div class="student-heading"><p class="eyebrow">UML / MANUAL PATH</p><h2 id="manual-title">The host drives the tool loop</h2><p>The host calls Messages, interprets tool_use, runs reserveStock, and appends results to its own messages array.</p></div><figure class="uml-figure"><div class="diagram-scroll" tabindex="0" role="region" aria-label="Scrollable manual sequence diagram"><img class="uml-image" src="/architecture-manual.svg" alt="UML sequence for the C02 manual tool path; the numbered code walkthrough below is its text equivalent."></div><figcaption>Read calls from top to bottom. Dashed arrows return data; open arrows deliver events. The inventory handler is local host code even though it has its own lane. On mobile, scroll sideways to keep labels readable.</figcaption></figure><div class="student-nav diagram-links" aria-label="manual diagram files"><a href="/architecture-manual.svg" target="_blank" rel="noopener">Open full size ↗</a><a href="/architecture-manual.svg" download>Download SVG</a><a href="/architecture-manual.png" download>Download PNG</a></div></section><section class="student-section" aria-labelledby="managed-title"><div class="student-heading"><p class="eyebrow">UML / MANAGED PATH</p><h2 id="managed-title">The session drives the next turn</h2><p>The host opens the session stream, answers custom-tool requests locally, and observes agent and lifecycle events.</p></div><figure class="uml-figure"><div class="diagram-scroll" tabindex="0" role="region" aria-label="Scrollable managed sequence diagram"><img class="uml-image" src="/architecture-managed.svg" alt="UML sequence for the C02 managed tool path; the numbered code walkthrough below is its text equivalent."></div><figcaption>Read calls from top to bottom. Dashed arrows return data; open arrows deliver events. The inventory handler is local host code even though it has its own lane. On mobile, scroll sideways to keep labels readable.</figcaption></figure><div class="student-nav diagram-links" aria-label="managed diagram files"><a href="/architecture-managed.svg" target="_blank" rel="noopener">Open full size ↗</a><a href="/architecture-managed.svg" download>Download SVG</a><a href="/architecture-managed.png" download>Download PNG</a></div></section><section id="walkthrough" class="student-section" aria-labelledby="walkthrough-title"><div class="student-heading"><p class="eyebrow">CONNECT THE DIAGRAMS TO THE SOURCE</p><h2 id="walkthrough-title">Walk through the application step by step</h2><p>These are excerpts from the actual implementation. Read the source files for the complete surrounding handlers.</p></div><ol class="run-steps"><li><div class="step-content"><h3>Choose a flow and open browser SSE</h3><figure class="code-example"><figcaption>public/lab.js · source excerpt</figcaption><pre><code class="language-typescript">function run(flow) {
+  resetColumn(flow);
+  $(&quot;.empty&quot;, cols[flow]).hidden = true;
+  setStatus(flow, &quot;running&quot;, &quot;Running&quot;);
+  setPending(flow, true);
+  const qs = new URLSearchParams({ flow, prompt: promptEl.value });
+  return new Promise((resolve) =&gt; {
+    const es = new EventSource(&quot;/api/run?&quot; + qs);
+    es.onmessage = (m) =&gt; {
+      const e = JSON.parse(m.data);
+      render(flow, e);
+      if (e.type === &quot;done&quot; || e.type === &quot;error&quot;) { es.close(); resolve(); }
+    };
+    // Close on any drop so EventSource does not reconnect and start a second run.
+    es.onerror = () =&gt; { es.close(); render(flow, { type: &quot;error&quot;, message: &quot;Lost the connection to the local server. Is `npm run dev` still running?&quot; }); resolve(); };
+  });
+}</code></pre><p class="code-explanation">The browser opens a new run through /api/run. On a stream drop it closes EventSource rather than letting a reconnect start another reservation run.</p></figure><figure class="code-example"><figcaption>src/server.ts · source excerpt</figcaption><pre><code class="language-typescript">const emit: Emit = (event) =&gt; void res.write(`data: ${JSON.stringify(event)}\n\n`);
+try {
+  if (flow === &quot;manual&quot;) await runManual(client, prompt, emit);
+  else if (flow === &quot;managed&quot;) await runManaged(client, prompt, emit);
+  else emit({ type: &quot;error&quot;, message: `Unknown flow &quot;${flow}&quot;` });</code></pre><p class="code-explanation">The local host runs the selected implementation and forwards structured progress records as SSE. The two flows share a result format, not the same provider protocol.</p></figure></div></li><li><div class="step-content"><h3>Manual: own the messages array and model calls</h3><figure class="code-example"><figcaption>src/flows/manual.ts · source excerpt</figcaption><pre><code class="language-typescript">const messages: Anthropic.MessageParam[] = [{ role: &quot;user&quot;, content: prompt }];
+emit({ type: &quot;start&quot;, flow: &quot;manual&quot;, prompt, model: MODEL });
+
+// The slide shows one iteration; &quot;repeat the model call to continue the loop&quot;.
+for (let turn = 1; turn &lt;= 10; turn++) {
+  // 1 · Ask the model
+  const res = await client.messages.create({ model: MODEL, max_tokens: 16000, tools, messages });
+  emit({ type: &quot;step&quot;, text: `messages.create #${turn} -&gt; stop_reason=${res.stop_reason}` });</code></pre><p class="code-explanation">The host initializes messages[] and drives a loop of at most ten model calls. Each call includes its locally retained history and the strict tool declaration.</p></figure></div></li><li><div class="step-content"><h3>Manual: execute each requested tool</h3><figure class="code-example"><figcaption>src/flows/manual.ts · source excerpt</figcaption><pre><code class="language-typescript">const calls = res.content.filter((b): b is Anthropic.ToolUseBlock =&gt; b.type === &quot;tool_use&quot;);
+if (calls.length === 0) throw new Error(&quot;Missing tool call&quot;);
+
+// 2 · Execute the effect for every call (the model may batch several)
+const results: Anthropic.ToolResultBlockParam[] = calls.map((call) =&gt; {
+  const result = reserveStock(call.input);
+  emit({ type: &quot;tool&quot;, trigger: &quot;stop_reason: tool_use&quot;, input: call.input, result });
+  return { type: &quot;tool_result&quot;, tool_use_id: call.id, content: result };
+});</code></pre><p class="code-explanation">The model can request multiple calls. The host runs reserveStock and pairs each result with the original tool_use_id. The schema is not a replacement for host validation.</p></figure></div></li><li><div class="step-content"><h3>Manual: append results and continue</h3><figure class="code-example"><figcaption>src/flows/manual.ts · source excerpt</figcaption><pre><code class="language-typescript">messages.push({ role: &quot;assistant&quot;, content: res.content });
+  messages.push({ role: &quot;user&quot;, content: results });
+  emit({ type: &quot;step&quot;, text: `messages.push(assistant call, user tool_result) -&gt; ${messages.length} messages` });
+  continue;
+}</code></pre><p class="code-explanation">The assistant call and the user tool-result message both enter history. continue triggers another model call. Non-tool stop reasons and the loop limit still need interpretation; a returned text response is not proof that every reservation succeeded.</p></figure></div></li><li><div class="step-content"><h3>Managed: create, observe, then send</h3><figure class="code-example"><figcaption>src/flows/managed.ts · source excerpt</figcaption><pre><code class="language-typescript">const session = await client.beta.sessions.create({
+  agent: agentId,
+  environment_id: environmentId,
+  title: &quot;Lesson C02 stock reservation&quot;,
+});
+const sessionId = session.id;
+emit({ type: &quot;start&quot;, flow: &quot;managed&quot;, prompt, model: MODEL, sessionId });
+
+// Stream-first: open the stream before sending the kickoff message.
+const stream = await client.beta.sessions.events.stream(sessionId);
+emit({ type: &quot;step&quot;, text: &quot;sessions.events.stream opened&quot; });
+await client.beta.sessions.events.send(sessionId, {
+  events: [{ type: &quot;user.message&quot;, content: [{ type: &quot;text&quot;, text: prompt }] }],
+});
+emit({ type: &quot;step&quot;, text: &quot;sent user.message&quot; });</code></pre><p class="code-explanation">The managed path creates a new session using reusable resources. It opens the provider stream before sending user.message. This provider stream is separate from the browser-to-host SSE connection.</p></figure></div></li><li><div class="step-content"><h3>Managed: answer the custom-tool request</h3><figure class="code-example"><figcaption>src/flows/managed.ts · source excerpt</figcaption><pre><code class="language-typescript">case &quot;agent.custom_tool_use&quot;: {
+  const result = reserveStock(event.input);
+  emit({ type: &quot;tool&quot;, trigger: &quot;agent.custom_tool_use&quot;, input: event.input, result });
+  await client.beta.sessions.events.send(sessionId, {
+    events: [
+      {
+        type: &quot;user.custom_tool_result&quot;,
+        custom_tool_use_id: event.id,
+        content: [{ type: &quot;text&quot;, text: result }],
+      },
+    ],
+  });
+  emit({ type: &quot;step&quot;, text: &quot;sent user.custom_tool_result&quot; });
+  break;
+}</code></pre><p class="code-explanation">The same host handler executes the effect. The result is a user.custom_tool_result whose custom_tool_use_id is the requested event ID. The session manages the next model turn; no manual messages[] array is maintained here.</p></figure></div></li><li><div class="step-content"><h3>Both paths: validate before changing inventory</h3><figure class="code-example"><figcaption>src/inventory.ts · source excerpt</figcaption><pre><code class="language-typescript">export function reserveStock(input: unknown): string {
+  const { sku, quantity } = (input ?? {}) as { sku?: unknown; quantity?: unknown };
+  if (typeof sku !== &quot;string&quot; || !Number.isInteger(quantity) || (quantity as number) &lt; 1) {
+    return JSON.stringify({ ok: false, error: &quot;Invalid input: need { sku: string, quantity: integer &gt;= 1 }&quot; });
+  }
+  const item = stock[sku];
+  if (!item) {
+    return JSON.stringify({ ok: false, error: `Unknown SKU ${sku}`, knownSkus: Object.keys(stock) });
+  }
+  const qty = quantity as number;
+  if (item.available &lt; qty) {
+    return JSON.stringify({ ok: false, error: `Only ${item.available} of ${sku} available` });
+  }
+  item.available -= qty;
+  const reservationId = `RES-${String(nextReservation++).padStart(4, &quot;0&quot;)}`;
+  return JSON.stringify({ ok: true, reservationId, sku, name: item.name, quantity: qty, remaining: item.available });
+}</code></pre><p class="code-explanation">The host rejects invalid quantities, unknown products, and insufficient stock. Only a successful call subtracts units and allocates a reservation ID. This in-memory sample has no durable idempotency ledger or transaction rollback across several calls.</p></figure></div></li><li><div class="step-content"><h3>Managed: interpret idle and retained history</h3><figure class="code-example"><figcaption>src/flows/managed.ts · source excerpt</figcaption><pre><code class="language-typescript">case &quot;session.status_idle&quot;:
+  stopReason = event.stop_reason.type;
+  emit({ type: &quot;step&quot;, text: `session.status_idle (${stopReason})` });
+  // requires_action = the session is waiting on our tool result; keep streaming.
+  if (stopReason !== &quot;requires_action&quot;) break loop;
+  break;
+
+case &quot;session.status_terminated&quot;:
+  stopReason = &quot;terminated&quot;;
+  break loop;</code></pre><p class="code-explanation">requires_action keeps the stream consumer running while tool work is answered. Another idle reason or termination ends this sample runner; that is not a blanket assertion of business success.</p></figure><figure class="code-example"><figcaption>src/flows/managed.ts · source excerpt</figcaption><pre><code class="language-typescript">const history = await client.beta.sessions.events.list(sessionId);
+  emit({
+    type: &quot;done&quot;,
+    stats: [
+      { label: &quot;events kept by the platform&quot;, value: history.data.length },
+      { label: &quot;messages kept by your host&quot;, value: 0 },
+      { label: &quot;session&quot;, value: sessionId },
+    ],
+    stock: stockSnapshot(),
+    ms: Date.now() - started,
+  });
+}</code></pre><p class="code-explanation">The provider retains session history. The displayed counter is history.data.length from the first listed page, not an automatically paginated total. A retained session is not archived by this code.</p></figure></div></li><li><div class="step-content"><h3>Render the returned evidence</h3><figure class="code-example"><figcaption>public/lab.js · source excerpt</figcaption><pre><code class="language-typescript">case &quot;tool&quot;: {
+  const { sku, quantity } = e.input || {};
+  let r; try { r = JSON.parse(e.result); } catch { r = { ok: false, error: e.result }; }
+  const outcome = r.ok
+    ? `&lt;span class=&quot;ok&quot;&gt;✓ ${esc(r.reservationId)} · ${esc(r.remaining)} left&lt;/span&gt;`
+    : `&lt;span class=&quot;err&quot;&gt;✗ ${esc(r.error)}&lt;/span&gt;`;
+  addItem(flow, &quot;&quot;, &quot;Your host&quot;, `&lt;div class=&quot;bubble host&quot;&gt;
+    &lt;span class=&quot;dim&quot;&gt;on ${esc(e.trigger)}&lt;/span&gt;
+    &lt;span&gt;&lt;span class=&quot;fn&quot;&gt;reserveStock&lt;/span&gt;(${esc(JSON.stringify(sku))}, ${esc(quantity)})&lt;/span&gt;
+    ${outcome}&lt;/div&gt;`);
+  break;
+}</code></pre><p class="code-explanation">The UI uses host-returned reservation results to show success or failure. Those values are escaped before being inserted into the timeline.</p></figure><figure class="code-example"><figcaption>public/lab.js · source excerpt</figcaption><pre><code class="language-typescript">case &quot;done&quot;: {
+  setPending(flow, false);
+  setStatus(flow, &quot;done&quot;, `Done · ${(e.ms / 1000).toFixed(1)} s`);
+  const stats = e.stats.map((s) =&gt; {
+    const small = typeof s.value === &quot;string&quot; &amp;&amp; s.value.length &gt; 12;
+    return `&lt;div class=&quot;stat&quot;&gt;&lt;b class=&quot;${small ? &quot;small&quot; : &quot;&quot;}&quot;&gt;${esc(s.value)}&lt;/b&gt;&lt;span&gt;${esc(s.label)}&lt;/span&gt;&lt;/div&gt;`;
+  }).join(&quot;&quot;);
+  const result = $(&quot;.result&quot;, col);
+  result.innerHTML = `&lt;div class=&quot;stats&quot;&gt;${stats}&lt;/div&gt;${renderStock(e.stock)}`;
+  result.hidden = false;
+  return;
+}</code></pre><p class="code-explanation">The Done badge means the runner reported done. Compare the stock table and tool error records before concluding that the whole request succeeded. Run both executes the two flows sequentially in one browser.</p></figure></div></li></ol><p class="learning-outcome"><strong>Explain it back:</strong> which code changes stock, which layer owns history, and why can an ordinary completed run still contain a failed reservation?</p></section><nav class="student-nav" aria-label="Continue learning">
+<a href="/guide.html#learning">What you will learn</a>
+<a href="/guide.html#run-guide">How to run the application</a>
+<a href="/architecture.html">Architecture &amp; workflow</a>
+<a href="/#comparison-lab" class="lab-link">Comparison lab ↗</a></nav>
+</main><script src="/navigation.js"></script></body></html>

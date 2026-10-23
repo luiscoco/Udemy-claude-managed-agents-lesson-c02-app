@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="1242" viewBox="0 0 1320 1242" role="img" aria-labelledby="title description">
+<title id="title">C02 — Your host drives the tool round trip.</title><desc id="description">One illustrated tool round trip; the host may repeat it or handle several requested calls. Five participant lanes show the student, browser, Node host, remote provider, and local inventory handler. The architecture page includes the code and text equivalent.</desc>
+<defs><marker id="call" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L12 6 L0 12 Z" fill="#193269"/></marker><marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="#193269" stroke-width="2"/></marker></defs>
+<rect x="1" y="1" width="1318" height="1240" rx="26" fill="#fff" stroke="#d7e7f5" stroke-width="2"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#090d3b}</style>
+<text x="34" y="48" font-size="26" font-weight="700" style="fill:#0872d4">LESSON C02 / MANUAL TOOL WORKFLOW</text>
+<text x="34" y="102" font-size="42" font-weight="700" style="fill:#090d3b">Your host drives the tool round trip.</text>
+<text x="34" y="145" font-size="26" font-weight="400" style="fill:#193269">One illustrated tool round trip; the host may repeat it or handle several requested calls.</text>
+<rect x="27" y="191" width="226" height="94" rx="16" fill="#edf7ff" stroke="#d7e7f5" stroke-width="2"/>
+<text x="40" y="231" font-size="27" font-weight="700" style="fill:#090d3b">Student</text>
+<text x="40" y="269" font-size="26" font-weight="400" style="fill:#193269">Browser user</text>
+<line x1="140" y1="285" x2="140" y2="998" stroke="#97aac1" stroke-width="2" stroke-dasharray="7 7"/>
+<rect x="287" y="191" width="226" height="94" rx="16" fill="#edf7ff" stroke="#d7e7f5" stroke-width="2"/>
+<text x="300" y="231" font-size="27" font-weight="700" style="fill:#090d3b">Browser UI</text>
+<text x="300" y="269" font-size="26" font-weight="400" style="fill:#193269">public/lab.js</text>
+<line x1="400" y1="285" x2="400" y2="998" stroke="#97aac1" stroke-width="2" stroke-dasharray="7 7"/>
+<rect x="547" y="191" width="226" height="94" rx="16" fill="#f3edff" stroke="#d7e7f5" stroke-width="2"/>
+<text x="560" y="231" font-size="27" font-weight="700" style="fill:#090d3b">Node.js host</text>
+<text x="560" y="269" font-size="26" font-weight="400" style="fill:#193269">TypeScript + SDK</text>
+<line x1="660" y1="285" x2="660" y2="998" stroke="#97aac1" stroke-width="2" stroke-dasharray="7 7"/>
+<rect x="807" y="191" width="226" height="94" rx="16" fill="#eaf8f1" stroke="#d7e7f5" stroke-width="2"/>
+<text x="820" y="231" font-size="27" font-weight="700" style="fill:#090d3b">Messages API</text>
+<text x="820" y="269" font-size="26" font-weight="400" style="fill:#193269">Remote API</text>
+<line x1="920" y1="285" x2="920" y2="998" stroke="#97aac1" stroke-width="2" stroke-dasharray="7 7"/>
+<rect x="1067" y="191" width="226" height="94" rx="16" fill="#f3edff" stroke="#d7e7f5" stroke-width="2"/>
+<text x="1080" y="231" font-size="27" font-weight="700" style="fill:#090d3b">Inventory</text>
+<text x="1080" y="269" font-size="26" font-weight="400" style="fill:#193269">Local host code</text>
+<line x1="1180" y1="285" x2="1180" y2="998" stroke="#97aac1" stroke-width="2" stroke-dasharray="7 7"/>
+<line x1="140" y1="350" x2="400" y2="350" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="150" y="338" font-size="26" font-weight="400" style="fill:#193269">1. Run manual</text>
+<line x1="400" y1="412" x2="660" y2="412" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="410" y="400" font-size="26" font-weight="400" style="fill:#193269">2. GET /api/run</text>
+<line x1="660" y1="474" x2="920" y2="474" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="670" y="462" font-size="26" font-weight="400" style="fill:#193269">3. messages.create</text>
+<line x1="920" y1="536" x2="660" y2="536" stroke="#193269" stroke-width="2.5" stroke-dasharray="9 7" marker-end="url(#open)"/>
+<text x="670" y="524" font-size="26" font-weight="400" style="fill:#193269">4. tool_use + ID</text>
+<line x1="660" y1="598" x2="1180" y2="598" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="670" y="586" font-size="26" font-weight="400" style="fill:#193269">5. reserveStock(input)</text>
+<line x1="1180" y1="660" x2="660" y2="660" stroke="#193269" stroke-width="2.5" stroke-dasharray="9 7" marker-end="url(#open)"/>
+<text x="670" y="648" font-size="26" font-weight="400" style="fill:#193269">6. Checked result</text>
+<path d="M660 704 h42 v24 h-42" fill="none" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="714" y="721" font-size="26" font-weight="400" style="fill:#193269">7. Append history</text>
+<line x1="660" y1="784" x2="920" y2="784" stroke="#193269" stroke-width="2.5" marker-end="url(#call)"/>
+<text x="670" y="772" font-size="26" font-weight="400" style="fill:#193269">8. messages.create</text>
+<line x1="920" y1="846" x2="660" y2="846" stroke="#193269" stroke-width="2.5" stroke-dasharray="9 7" marker-end="url(#open)"/>
+<text x="670" y="834" font-size="26" font-weight="400" style="fill:#193269">9. Final response</text>
+<line x1="660" y1="908" x2="400" y2="908" stroke="#193269" stroke-width="2.5" marker-end="url(#open)"/>
+<text x="410" y="896" font-size="26" font-weight="400" style="fill:#193269">10. SSE steps + stock</text>
+<line x1="400" y1="970" x2="140" y2="970" stroke="#193269" stroke-width="2.5" stroke-dasharray="9 7" marker-end="url(#open)"/>
+<text x="150" y="958" font-size="26" font-weight="400" style="fill:#193269">11. Reply + evidence</text>
+<rect x="27" y="1032" width="1266" height="72" rx="16" fill="#eaf8f1" stroke="#d7e7f5" stroke-width="2"/>
+<text x="45" y="1077" font-size="27" font-weight="700" style="fill:#056b4b">Host owns messages[] → correlate tool_result → call the model again; max 10 calls.</text>
+<text x="43" y="1149" font-size="26" font-weight="400" style="fill:#193269">Solid arrow: request    ·    Dashed arrow: returned data    ·    Open arrow: event</text>
+<text x="43" y="1188" font-size="26" font-weight="400" style="fill:#193269">The local host executes reserveStock in both flows. No cloud inventory tool is used.</text>
+</svg>

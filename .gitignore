@@ -1,0 +1,24 @@
+node_modules/
+presentation/
+output/
+reviewed/
+v3/
+teaching-material/
+dist/
+.env*
+!.env.example
+.managed-ids.json
+__pycache__/
+*.py[cod]
+*.log
+*.pem
+*.key
+.npm-cache/
+.DS_Store
+
+# Teaching-video production scripts are not application source.
+/assemble_c02_review.py
+/build_c02_review.py
+/prepare_c02_live.py
+/prepare_c02_review.py
+/record_c02_live.py
