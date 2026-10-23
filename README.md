@@ -2,15 +2,6 @@
 
 Compare two real Claude API flows using the same local `reserveStock` handler. In the manual path, your host drives model calls and keeps `messages[]`. In the managed path, the session drives iteration and retains its event history. **The host executes the inventory effect in both paths.**
 
-## Explore the application
-
-- [Student guide: concepts and run instructions](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/guide.html)
-- [Architecture, setup prerequisites, UML diagrams, and code walkthrough](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/architecture.html)
-- [Comparison lab](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/index.html)
-- UML images: [manual SVG](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/architecture-manual.svg), [manual PNG](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/architecture-manual.png), [managed SVG](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/architecture-managed.svg), [managed PNG](https://github.com/luiscoco/Udemy-claude-managed-agents-lesson-c02-app/blob/main/public/architecture-managed.png).
-
-These links open repository files on GitHub. Run the application to view the web pages locally. Each page has navigation buttons and a shared light/dark preference. The lab remembers the prompt in the current browser tab; returning does not run another reservation automatically.
-
 ## What students learn
 
 1. Choose between Messages API and Managed Agents by identifying who drives iteration and retains history.
